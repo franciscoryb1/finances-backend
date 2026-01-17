@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: finances_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: finances
+      POSTGRES_USER: finances_user
+      POSTGRES_PASSWORD: finances_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - finances_pgdata:/var/lib/postgresql/data
+
+volumes:
+  finances_pgdata:

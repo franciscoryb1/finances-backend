@@ -1,0 +1,103 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// =========================
+// ENUMS
+// =========================
+
+enum MovementType {
+  INCOME
+  EXPENSE
+}
+
+enum AccountType {
+  CASH
+  BANK
+  CREDIT_CARD
+  WALLET
+}
+
+enum CategoryType {
+  INCOME
+  EXPENSE
+}
+
+// =========================
+// MODELS
+// =========================
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  isActive     Boolean  @default(true)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  accounts     Account[]
+  categories   Category[]
+  movements    Movement[]
+}
+
+model Account {
+  id        Int         @id @default(autoincrement())
+  userId    Int
+  name      String
+  type      AccountType
+  isActive  Boolean     @default(true)
+
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  movements Movement[]
+
+  @@index([userId])
+}
+
+model Category {
+  id        Int          @id @default(autoincrement())
+  name      String
+  type      CategoryType
+  userId    Int?
+
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  user      User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  movements Movement[]
+
+  @@unique([name, userId])
+  @@index([userId])
+}
+
+model Movement {
+  id          Int          @id @default(autoincrement())
+  userId      Int
+  accountId   Int
+  categoryId  Int
+  type        MovementType
+  amountCents Int
+  occurredAt  DateTime
+  description String?
+
+  isDeleted   Boolean      @default(false)
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account     Account      @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  category    Category     @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@index([userId, occurredAt])
+  @@index([accountId])
+  @@index([categoryId])
+}
