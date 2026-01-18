@@ -1,0 +1,39 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Nest: Debug",
+      "program": "${workspaceFolder}/node_modules/@nestjs/cli/bin/nest.js",
+      "runtimeExecutable": "C:\\Users\\emili\\AppData\\Local\\fnm_multishells\\7708_1766276452857\\node.exe",
+      "args": ["start", "--debug", "--watch"],
+      "cwd": "${workspaceFolder}",
+      "autoAttachChildProcesses": true,
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Nest: Build & Run",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["run", "start"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "preLaunchTask": "build", // si tienes una tarea de compilación TypeScript
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Attach Nest (9229)",
+      "type": "node",
+      "request": "attach",
+      "port": 9229,
+      "address": "127.0.0.1",
+      "restart": true,
+      //"protocol": "inspector",
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ]
+}
