@@ -44,6 +44,12 @@ model User {
   accounts     Account[]
   categories   Category[]
   movements    Movement[]
+
+  creditCards             CreditCard[]
+  creditCardPurchases     CreditCardPurchase[]
+  creditCardInstallments  CreditCardInstallment[]
+  creditCardStatements    CreditCardStatement[]
+  creditCardPayments      CreditCardPayment[]
 }
 
 model Account {
@@ -59,6 +65,9 @@ model Account {
 
   user                 User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   movements            Movement[]
+
+  creditCardsAsBank    CreditCard[] @relation("AccountAsBankForCards")
+  creditCardPayments   CreditCardPayment[]
 
   @@index([userId])
 }
@@ -76,6 +85,7 @@ model Category {
 
   user      User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
   movements Movement[]
+  creditCardPurchases CreditCardPurchase[]
 
   @@unique([name, userId])
   @@index([userId])
@@ -101,9 +111,167 @@ model Movement {
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   account     Account      @relation(fields: [accountId], references: [id], onDelete: Restrict)
   category    Category?    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  creditCardPayment CreditCardPayment?
 
   @@index([userId, occurredAt])
   @@index([userId, isDeleted])
   @@index([accountId])
   @@index([categoryId])
+}
+
+
+
+
+
+enum CreditCardBrand {
+  VISA
+  MASTERCARD
+  AMEX
+  OTHER
+}
+
+enum CreditCardStatementStatus {
+  OPEN
+  CLOSED
+  PAID
+}
+
+enum CreditCardInstallmentStatus {
+  PENDING
+  BILLED
+  PAID
+}
+
+
+model CreditCard {
+  id            Int              @id @default(autoincrement())
+  userId        Int
+  bankAccountId Int
+
+  name          String
+  brand         CreditCardBrand? // opcional
+  limitCents    Int
+  closingDay    Int              // 1-28
+  dueDay        Int              // 1-28
+
+  cardLast4     String
+  cardExpiresAt DateTime
+
+  isActive      Boolean          @default(true)
+
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bankAccount   Account          @relation("AccountAsBankForCards", fields: [bankAccountId], references: [id], onDelete: Restrict)
+
+  purchases     CreditCardPurchase[]
+  statements    CreditCardStatement[]
+
+  @@index([userId])
+  @@index([bankAccountId])
+}
+
+model CreditCardPurchase {
+  id                Int       @id @default(autoincrement())
+  userId             Int
+  creditCardId       Int
+  categoryId         Int?
+
+  totalAmountCents   Int
+  installmentsCount  Int       // >= 1
+  occurredAt         DateTime
+  description        String?
+
+  isDeleted          Boolean   @default(false)
+
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  creditCard         CreditCard @relation(fields: [creditCardId], references: [id], onDelete: Restrict)
+  category           Category?  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  installments       CreditCardInstallment[]
+
+  @@index([userId, occurredAt])
+  @@index([creditCardId])
+  @@index([categoryId])
+}
+
+model CreditCardInstallment {
+  id                 Int                         @id @default(autoincrement())
+  userId             Int
+  purchaseId         Int
+  statementId        Int?
+
+  installmentNumber  Int
+  amountCents        Int
+
+  year               Int
+  month              Int
+
+  status             CreditCardInstallmentStatus @default(PENDING)
+
+  createdAt          DateTime                    @default(now())
+  updatedAt          DateTime                    @updatedAt
+
+  user               User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  purchase           CreditCardPurchase          @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  statement          CreditCardStatement?        @relation(fields: [statementId], references: [id], onDelete: SetNull)
+
+  @@index([userId, year, month])
+  @@index([purchaseId])
+  @@index([statementId])
+}
+
+model CreditCardStatement {
+  id              Int                     @id @default(autoincrement())
+  userId          Int
+  creditCardId    Int
+
+  year            Int
+  month           Int
+
+  periodStartDate DateTime
+  closingDate     DateTime
+  dueDate         DateTime
+
+  totalCents      Int                     @default(0)
+  status          CreditCardStatementStatus @default(OPEN)
+
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  user            User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  creditCard      CreditCard              @relation(fields: [creditCardId], references: [id], onDelete: Restrict)
+
+  installments    CreditCardInstallment[]
+  payments        CreditCardPayment[]
+
+  @@unique([creditCardId, year, month])
+  @@index([userId])
+  @@index([creditCardId, status])
+}
+
+model CreditCardPayment {
+  id               Int       @id @default(autoincrement())
+  userId           Int
+  statementId      Int
+  paidFromAccountId Int
+  movementId       Int?      @unique
+
+  amountCents      Int
+  paidAt           DateTime
+
+  createdAt        DateTime  @default(now())
+
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  statement        CreditCardStatement @relation(fields: [statementId], references: [id], onDelete: Restrict)
+  paidFromAccount  Account   @relation(fields: [paidFromAccountId], references: [id], onDelete: Restrict)
+  movement         Movement? @relation(fields: [movementId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([statementId])
+  @@index([paidFromAccountId])
 }
