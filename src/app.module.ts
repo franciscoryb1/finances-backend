@@ -7,6 +7,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AccountsModule } from './accounts/accounts.module';
 import { MovementsModule } from './movements/movements.module';
 import { CategoriesModule } from './categories/categories.module';
+import { CreditCardsModule } from './credit-cards/credit-cards.module';
 
 @Module({
   imports: [PrismaModule,
@@ -14,7 +15,8 @@ import { CategoriesModule } from './categories/categories.module';
     UsersModule,
     AccountsModule,
     MovementsModule,
-    CategoriesModule],
+    CategoriesModule,
+    CreditCardsModule],
   controllers: [AppController],
   providers: [AppService],
 })
