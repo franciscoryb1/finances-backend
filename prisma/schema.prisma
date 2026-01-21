@@ -208,8 +208,8 @@ model CreditCardInstallment {
   installmentNumber  Int
   amountCents        Int
 
-  year               Int
-  month              Int
+  year               Int?
+  month              Int?
 
   status             CreditCardInstallmentStatus @default(PENDING)
 
