@@ -68,7 +68,7 @@ export class CreditCardPurchasesService {
             description,
         } = dto;
 
-        // 1️⃣ Validaciones base
+        // valido categoria y tarjeta
         await this.validateCategory(userId, categoryId);
         const creditCard = await this.validateCard(userId, creditCardId);
 
@@ -76,7 +76,7 @@ export class CreditCardPurchasesService {
 
         return this.prisma.$transaction(async (tx) => {
 
-            // 2️⃣ Validar límite de la tarjeta (monto comprometido)
+            // validar limite de la tarjeta
             const committed = await tx.creditCardInstallment.aggregate({
                 where: {
                     purchase: { userId, creditCardId },
@@ -91,7 +91,44 @@ export class CreditCardPurchasesService {
                 throw new BadRequestException('Credit card limit exceeded');
             }
 
-            // 3️⃣ Crear compra
+
+            // busco el último statement de la tarjeta
+            // busco un statement OPEN
+            const openStatement = await tx.creditCardStatement.findFirst({
+                where: {
+                    creditCardId,
+                    status: 'OPEN',
+                },
+            });
+
+            let firstStatementSequence: number;
+
+            if (openStatement) {
+                // valido si la compra cae dentro del período del statement
+                if (
+                    occurredDate < openStatement.periodStartDate ||
+                    occurredDate >= openStatement.closingDate
+                ) {
+                    throw new BadRequestException(
+                        'Purchase date is outside the open statement period',
+                    );
+                }
+
+                firstStatementSequence = openStatement.sequenceNumber;
+            } else {
+                // no hay statement abierto → empieza en el próximo
+                const lastStatement = await tx.creditCardStatement.findFirst({
+                    where: { creditCardId },
+                    orderBy: { sequenceNumber: 'desc' },
+                });
+
+                firstStatementSequence = lastStatement
+                    ? lastStatement.sequenceNumber + 1
+                    : 1;
+            }
+
+
+            // crear compra
             const purchase = await tx.creditCardPurchase.create({
                 data: {
                     userId,
@@ -101,10 +138,11 @@ export class CreditCardPurchasesService {
                     installmentsCount,
                     occurredAt: occurredDate,
                     description,
+                    firstStatementSequence,
                 },
             });
 
-            // 4️⃣ Generar cuotas (si aplica)
+            // generar cuotas
             if (installmentsCount > 1) {
                 const baseAmount = Math.floor(totalAmountCents / installmentsCount);
                 const remainder = totalAmountCents % installmentsCount;
@@ -118,6 +156,7 @@ export class CreditCardPurchasesService {
                         userId,
                         purchaseId: purchase.id,
                         installmentNumber: i,
+                        billingCycleOffset: i - 1,
                         amountCents: amount,
                         status: CreditCardInstallmentStatus.PENDING,
                         year: null,

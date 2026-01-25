@@ -9,6 +9,7 @@ import { MovementsModule } from './movements/movements.module';
 import { CategoriesModule } from './categories/categories.module';
 import { CreditCardsModule } from './credit-cards/credit-cards.module';
 import { CreditCardPurchasesModule } from './credit-card-purchases/credit-card-purchases.module';
+import { CreditCardStatementsModule } from './credit-card-statements/credit-card-statements.module';
 
 @Module({
   imports: [PrismaModule,
@@ -18,7 +19,9 @@ import { CreditCardPurchasesModule } from './credit-card-purchases/credit-card-p
     MovementsModule,
     CategoriesModule,
     CreditCardsModule,
-    CreditCardPurchasesModule],
+    CreditCardPurchasesModule,
+    CreditCardStatementsModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
