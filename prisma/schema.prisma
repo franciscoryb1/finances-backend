@@ -232,6 +232,7 @@ model CreditCardStatement {
   id              Int                     @id @default(autoincrement())
   userId          Int
   creditCardId    Int
+  sequenceNumber  Int
 
   year            Int
   month           Int
