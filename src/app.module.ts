@@ -10,9 +10,14 @@ import { CategoriesModule } from './categories/categories.module';
 import { CreditCardsModule } from './credit-cards/credit-cards.module';
 import { CreditCardPurchasesModule } from './credit-card-purchases/credit-card-purchases.module';
 import { CreditCardStatementsModule } from './credit-card-statements/credit-card-statements.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [PrismaModule,
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    PrismaModule,
     AuthModule,
     UsersModule,
     AccountsModule,

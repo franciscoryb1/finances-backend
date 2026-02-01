@@ -1,8 +1,7 @@
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { ChatbotApiKeyGuard } from './chatbot-api-key.guard';
-import { ResolveChatbotUserDto } from './dto/resolve-chatbot-user.dto';
 import { ResolveChatbotUserDto } from './dto/resolve-chatbot-user.dto';
 
 @Controller('auth')
@@ -11,7 +10,7 @@ export class AuthController {
 
   @Post('register')
   register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto.email, dto.password);
+    return this.authService.register(dto.email, dto.password, dto.phoneNumber);
   }
 
   @Post('login')

@@ -11,11 +11,14 @@ export class UsersService {
     });
   }
 
-  async create(email: string, passwordHash: string) {
+  async create(email: string,
+    passwordHash: string,
+    phoneNumber: string) {
     return this.prisma.user.create({
       data: {
         email,
         passwordHash,
+        phoneNumber,
       },
     });
   }
